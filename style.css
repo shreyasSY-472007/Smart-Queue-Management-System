@@ -1,0 +1,133 @@
+body{
+font-family: Arial;
+text-align:center;
+background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+color:white;
+overflow:hidden;
+}
+
+h1{
+margin-top:30px;
+}
+
+.container{
+width:500px;
+margin:auto;
+margin-top:40px;
+padding:25px;
+background:rgba(255,255,255,0.1);
+border-radius:15px;
+backdrop-filter:blur(10px);
+box-shadow:0 0 20px cyan;
+}
+
+input{
+padding:10px;
+border:none;
+border-radius:8px;
+margin:10px;
+}
+
+button{
+padding:10px 20px;
+border:none;
+border-radius:10px;
+background:linear-gradient(45deg,#ff00cc,#3333ff);
+color:white;
+cursor:pointer;
+transition:0.3s;
+}
+
+button:hover{
+transform:scale(1.1);
+box-shadow:0 0 10px cyan;
+}
+
+.queue{
+display:flex;
+justify-content:center;
+flex-wrap:wrap;
+}
+
+.box{
+background:rgba(255,255,255,0.2);
+padding:15px;
+margin:10px;
+border-radius:10px;
+min-width:100px;
+animation:pop 0.4s;
+}
+
+@keyframes pop{
+from{transform:scale(0.5);opacity:0}
+to{transform:scale(1);opacity:1}
+}
+
+.stats{
+margin-top:20px;
+background:rgba(255,255,255,0.15);
+padding:15px;
+border-radius:10px;
+}
+
+/* Flying background objects */
+
+.bg-object{
+position:absolute;
+border-radius:50%;
+opacity:0.25;
+filter:blur(2px);
+}
+
+.obj1{
+width:70px;
+height:70px;
+background:cyan;
+animation:fly1 18s linear infinite;
+}
+
+.obj2{
+width:50px;
+height:50px;
+background:magenta;
+animation:fly2 20s linear infinite;
+}
+
+.obj3{
+width:90px;
+height:90px;
+background:yellow;
+animation:fly3 25s linear infinite;
+}
+
+/* Flying paths */
+
+@keyframes fly1{
+
+0%{top:90%; left:-10%;}
+25%{top:60%; left:30%;}
+50%{top:40%; left:60%;}
+75%{top:20%; left:90%;}
+100%{top:-10%; left:110%;}
+
+}
+
+@keyframes fly2{
+
+0%{top:-10%; left:80%;}
+25%{top:20%; left:50%;}
+50%{top:50%; left:20%;}
+75%{top:70%; left:-10%;}
+100%{top:110%; left:-20%;}
+
+}
+
+@keyframes fly3{
+
+0%{top:50%; left:-20%;}
+25%{top:30%; left:20%;}
+50%{top:10%; left:50%;}
+75%{top:40%; left:80%;}
+100%{top:80%; left:120%;}
+
+}
