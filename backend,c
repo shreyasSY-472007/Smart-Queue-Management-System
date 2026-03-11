@@ -1,0 +1,42 @@
+#include <stdio.h>
+
+// This is our 'Customer' structure
+typedef struct {
+    int id;
+    int wait_time;
+} Customer;
+
+Customer queue[10]; // Max 10 people in line
+int count = 0;
+
+// Function to add a person to the end of the line
+void add_person(int id) {
+    if (count < 10) {
+        queue[count].id = id;
+        queue[count].wait_time = 0;
+        count++;
+    }
+}
+
+// Function to remove the person at the front (after they pay)
+void remove_person() {
+    if (count > 0) {
+        for (int i = 0; i < count - 1; i++) {
+            queue[i] = queue[i + 1];
+        }
+        count--;
+    }
+}
+
+// Function to get the waiting time of a specific person
+int get_time(int index) {
+    if (index < count) return queue[index].wait_time;
+    return -1;
+}
+
+// Function to make time pass (adds 1 second to everyone's wait)
+void tick() {
+    for (int i = 0; i < count; i++) {
+        queue[i].wait_time++;
+    }
+}  
