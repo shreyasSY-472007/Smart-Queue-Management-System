@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Smart Queue Management</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<h1>🚀 Smart Queue Management System</h1>
+
+<div class="container">
+
+<div class="controls">
+
+<input type="number" id="personID" placeholder="Enter Person ID">
+
+<button onclick="addPerson()">Add Person</button>
+<button onclick="removePerson()">Remove Person</button>
+
+</div>
+
+<h2>Queue Visualization</h2>
+
+<div id="queueContainer" class="queue"></div>
+
+<h2>Statistics</h2>
+
+<div class="stats">
+<p>Total Customers: <span id="total">0</span></p>
+<p>Average Wait: <span id="avg">0</span> sec</p>
+<p>Longest Wait: <span id="long">0</span> sec</p>
+</div>
+
+</div>
+
+<!-- Flying Background Objects -->
+<div class="bg-object obj1"></div>
+<div class="bg-object obj2"></div>
+<div class="bg-object obj3"></div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
