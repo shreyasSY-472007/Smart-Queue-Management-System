@@ -1,45 +1,680 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Smart Queue Management</title>
-<link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QueuePro — Multi-Counter Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #f4f1eb;
+  --bg2:      #ede9e0;
+  --surface:  #ffffff;
+  --border:   #ddd9cf;
+  --text:     #1a1916;
+  --muted:    #8a8678;
+  --muted2:   #b8b4a8;
+  --c1: #c0392b;
+  --c2: #1a6b4a;
+  --c3: #1e4d8c;
+  --c4: #7b3fa0;
+  --c1-bg: #fdf1f0;
+  --c2-bg: #f0f7f4;
+  --c3-bg: #f0f4fb;
+  --c4-bg: #f7f2fb;
+  --gold:   #c9a84c;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+  --font-display: 'Playfair Display', serif;
+  --radius: 14px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%23f4f1eb'/%3E%3Crect x='0' y='0' width='1' height='1' fill='%23eee9df' opacity='.4'/%3E%3Crect x='2' y='2' width='1' height='1' fill='%23eee9df' opacity='.4'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0;
+}
+
+.app { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 36px 24px 80px; }
+
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 40px; flex-wrap: wrap; gap: 16px;
+}
+
+.logo-name {
+  font-family: var(--font-display);
+  font-size: 38px; font-weight: 900;
+  letter-spacing: -1.5px; line-height: 1; color: var(--text);
+}
+.logo-name span { color: var(--gold); }
+.logo-sub {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 3px;
+  text-transform: uppercase; color: var(--muted); margin-top: 4px;
+}
+
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+
+.clock-widget {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 18px;
+  display: flex; flex-direction: column; align-items: center;
+  box-shadow: var(--shadow);
+}
+.clock-time { font-family: var(--font-mono); font-size: 20px; font-weight: 500; color: var(--text); letter-spacing: 1px; }
+.clock-date { font-family: var(--font-mono); font-size: 9px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+
+.system-badge {
+  background: var(--text); color: var(--bg);
+  border-radius: 8px; padding: 10px 16px;
+  font-size: 12px; font-weight: 500;
+  display: flex; align-items: center; gap: 8px;
+}
+.live-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #4ade80; box-shadow: 0 0 0 0 #4ade80;
+  animation: livePulse 2s infinite;
+}
+@keyframes livePulse {
+  0%   { box-shadow: 0 0 0 0 rgba(74,222,128,0.6); }
+  70%  { box-shadow: 0 0 0 6px rgba(74,222,128,0); }
+  100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
+}
+
+.kpi-strip {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 14px; margin-bottom: 28px;
+}
+.kpi {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px 22px;
+  box-shadow: var(--shadow); position: relative; overflow: hidden;
+  transition: transform 0.2s;
+}
+.kpi:hover { transform: translateY(-2px); }
+.kpi-accent { position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.kpi:nth-child(1) .kpi-accent { background: var(--c1); }
+.kpi:nth-child(2) .kpi-accent { background: var(--c2); }
+.kpi:nth-child(3) .kpi-accent { background: var(--c3); }
+.kpi:nth-child(4) .kpi-accent { background: var(--gold); }
+.kpi-icon { font-size: 22px; margin-bottom: 10px; }
+.kpi-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 4px; }
+.kpi-value { font-family: var(--font-display); font-size: 36px; font-weight: 700; line-height: 1; color: var(--text); transition: color 0.3s; }
+.kpi-sub { font-size: 11px; color: var(--muted2); margin-top: 4px; }
+
+.main-grid {
+  display: grid; grid-template-columns: 1fr 340px;
+  gap: 20px; align-items: start;
+}
+
+.add-panel {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 24px;
+  box-shadow: var(--shadow); margin-bottom: 20px;
+}
+.panel-title {
+  font-family: var(--font-display); font-size: 18px; font-weight: 700;
+  margin-bottom: 18px; color: var(--text);
+  display: flex; align-items: center; gap: 8px;
+}
+.panel-title-icon {
+  width: 28px; height: 28px; border-radius: 6px;
+  background: var(--text); color: var(--bg);
+  display: flex; align-items: center; justify-content: center; font-size: 14px;
+}
+.add-form {
+  display: grid; grid-template-columns: 1fr 1fr auto;
+  gap: 12px; align-items: end;
+}
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); }
+.field input, .field select {
+  background: var(--bg); border: 1.5px solid var(--border);
+  color: var(--text); font-family: var(--font-body);
+  font-size: 14px; font-weight: 500; padding: 10px 14px;
+  border-radius: 8px; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+  -moz-appearance: none; -webkit-appearance: none; appearance: none;
+}
+.field select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238a8678' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center;
+  padding-right: 32px; cursor: pointer;
+}
+.field input:focus, .field select:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.15);
+  background: var(--surface);
+}
+.btn-primary {
+  background: var(--text); color: var(--bg);
+  border: none; border-radius: 8px;
+  font-family: var(--font-body); font-size: 14px; font-weight: 600;
+  padding: 10px 24px; cursor: pointer; transition: all 0.15s;
+  white-space: nowrap; display: flex; align-items: center; gap: 8px; align-self: end;
+}
+.btn-primary:hover { background: #333; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+.btn-primary:active { transform: translateY(0); }
+
+.counters-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+.counter-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+  box-shadow: var(--shadow); transition: box-shadow 0.2s;
+}
+.counter-card:hover { box-shadow: var(--shadow-lg); }
+.counter-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; border-bottom: 1px solid var(--border);
+}
+.counter-id-wrap { display: flex; align-items: center; gap: 10px; }
+.counter-badge {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 13px; font-weight: 500; color: #fff;
+}
+.c1 .counter-badge { background: var(--c1); }
+.c2 .counter-badge { background: var(--c2); }
+.c3 .counter-badge { background: var(--c3); }
+.c4 .counter-badge { background: var(--c4); }
+.counter-name { font-weight: 600; font-size: 14px; }
+.counter-status {
+  font-size: 10px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 20px; transition: all 0.3s;
+}
+.status-open  { background: #dcfce7; color: #166534; }
+.status-busy  { background: #fef9c3; color: #854d0e; }
+.status-full  { background: #fee2e2; color: #991b1b; }
+
+.counter-queue {
+  padding: 14px 18px; min-height: 96px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.q-empty {
+  display: flex; align-items: center; justify-content: center;
+  height: 60px; font-size: 12px; color: var(--muted2); font-style: italic;
+}
+.q-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 12px; border-radius: 8px;
+  background: var(--bg); border: 1px solid var(--border);
+  animation: rowIn 0.25s cubic-bezier(0.34,1.4,0.64,1) both;
+}
+@keyframes rowIn {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.q-row.front { border-color: currentColor; font-weight: 600; }
+.c1 .q-row.front { background: var(--c1-bg); color: var(--c1); }
+.c2 .q-row.front { background: var(--c2-bg); color: var(--c2); }
+.c3 .q-row.front { background: var(--c3-bg); color: var(--c3); }
+.c4 .q-row.front { background: var(--c4-bg); color: var(--c4); }
+.q-pos { font-family: var(--font-mono); font-size: 10px; color: var(--muted2); min-width: 18px; }
+.q-name { flex: 1; font-size: 13px; font-weight: 500; padding: 0 8px; color: var(--text); }
+.q-row.front .q-name { color: inherit; }
+.q-wait {
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--muted); background: var(--bg2);
+  padding: 2px 8px; border-radius: 20px;
+}
+.q-row.front .q-wait { background: currentColor; color: #fff !important; }
+
+.counter-foot {
+  display: flex; gap: 8px; padding: 12px 18px;
+  border-top: 1px solid var(--border); background: var(--bg);
+}
+.btn-serve {
+  flex: 1; background: var(--surface); color: var(--text);
+  border: 1.5px solid var(--border); border-radius: 7px; padding: 8px 0;
+  font-family: var(--font-body); font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s; letter-spacing: 0.3px;
+}
+.c1 .btn-serve:hover { background: var(--c1); color: #fff; border-color: var(--c1); }
+.c2 .btn-serve:hover { background: var(--c2); color: #fff; border-color: var(--c2); }
+.c3 .btn-serve:hover { background: var(--c3); color: #fff; border-color: var(--c3); }
+.c4 .btn-serve:hover { background: var(--c4); color: #fff; border-color: var(--c4); }
+.btn-serve:active { transform: scale(0.97); }
+.btn-tick-c {
+  background: var(--surface); color: var(--muted);
+  border: 1.5px solid var(--border); border-radius: 7px;
+  padding: 8px 12px; font-size: 14px; cursor: pointer; transition: all 0.15s;
+}
+.btn-tick-c:hover { background: var(--gold); color: #fff; border-color: var(--gold); }
+
+.sidebar { display: flex; flex-direction: column; gap: 16px; }
+
+.global-panel {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow);
+}
+.global-panel .panel-title { margin-bottom: 14px; }
+.global-btns { display: flex; flex-direction: column; gap: 8px; }
+.btn-global {
+  width: 100%; border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 11px 16px; font-family: var(--font-body); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 10px;
+  background: var(--surface); color: var(--text);
+}
+.btn-global:hover { border-color: var(--text); background: var(--text); color: var(--bg); }
+.btn-global:active { transform: scale(0.98); }
+.btn-global.danger { color: var(--c1); border-color: #f8d7d5; background: var(--c1-bg); }
+.btn-global.danger:hover { background: var(--c1); color: #fff; border-color: var(--c1); }
+.btn-icon { font-size: 16px; }
+
+.log-panel {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); flex: 1;
+}
+.log-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; border-bottom: 1px solid var(--border);
+}
+.log-title { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.log-count {
+  background: var(--bg2); color: var(--muted);
+  font-family: var(--font-mono); font-size: 10px; padding: 2px 8px; border-radius: 20px;
+}
+.btn-log-clear { background: none; border: none; font-size: 11px; color: var(--muted2); cursor: pointer; font-family: var(--font-body); transition: color 0.15s; }
+.btn-log-clear:hover { color: var(--c1); }
+.log-list {
+  padding: 10px 0; max-height: 340px; overflow-y: auto;
+  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+}
+.log-item {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 7px 16px; border-bottom: 1px solid transparent;
+  transition: background 0.1s; animation: logSlide 0.2s ease;
+}
+@keyframes logSlide {
+  from { opacity: 0; background: rgba(201,168,76,0.12); }
+  to { opacity: 1; background: transparent; }
+}
+.log-item:hover { background: var(--bg); }
+.log-dot { width: 7px; height: 7px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+.log-dot.add    { background: var(--c2); }
+.log-dot.serve  { background: var(--c1); }
+.log-dot.tick   { background: var(--gold); }
+.log-dot.info   { background: var(--muted2); }
+.log-dot.warn   { background: #f59e0b; }
+.log-text { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.4; }
+.log-time { font-family: var(--font-mono); font-size: 10px; color: var(--muted2); display: block; margin-top: 1px; }
+
+.toast-container { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 8px; z-index: 9999; }
+.toast {
+  background: var(--text); color: var(--bg); border-radius: 10px; padding: 12px 20px;
+  font-size: 13px; font-weight: 500; box-shadow: var(--shadow-lg);
+  display: flex; align-items: center; gap: 8px;
+  animation: toastIn 0.3s cubic-bezier(0.34,1.4,0.64,1); max-width: 280px;
+}
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.toast.fadeout { animation: toastOut 0.3s ease forwards; }
+@keyframes toastOut { to { opacity: 0; transform: translateX(20px); } }
+
+@media (max-width: 900px) {
+  .main-grid { grid-template-columns: 1fr; }
+  .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+  .add-form  { grid-template-columns: 1fr 1fr; }
+  .add-form .btn-primary { grid-column: 1 / -1; justify-content: center; }
+}
+@media (max-width: 550px) {
+  .counters-grid { grid-template-columns: 1fr; }
+  .kpi-strip     { grid-template-columns: repeat(2, 1fr); }
+  .add-form      { grid-template-columns: 1fr; }
+}
+</style>
 </head>
-
 <body>
+<div class="app">
 
-<h1>🚀 Smart Queue Management System</h1>
+  <div class="topbar">
+    <div>
+      <div class="logo-name">Queue<span>Pro</span></div>
+      <div class="logo-sub">Multi-Counter Queue Management System</div>
+    </div>
+    <div class="topbar-right">
+      <div class="clock-widget">
+        <div class="clock-time" id="clock">00:00:00</div>
+        <div class="clock-date" id="clock-date">—</div>
+      </div>
+      <div class="system-badge">
+        <div class="live-dot"></div>
+        System Online
+      </div>
+    </div>
+  </div>
 
-<div class="container">
+  <div class="kpi-strip">
+    <div class="kpi">
+      <div class="kpi-accent"></div>
+      <div class="kpi-icon">👥</div>
+      <div class="kpi-label">Total Waiting</div>
+      <div class="kpi-value" id="kpi-total">0</div>
+      <div class="kpi-sub">Across all counters</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-accent"></div>
+      <div class="kpi-icon">✅</div>
+      <div class="kpi-label">Served Today</div>
+      <div class="kpi-value" id="kpi-served">0</div>
+      <div class="kpi-sub">Total customers</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-accent"></div>
+      <div class="kpi-icon">⏱</div>
+      <div class="kpi-label">Longest Wait</div>
+      <div class="kpi-value" id="kpi-maxwait">0<small style="font-size:16px;font-family:var(--font-mono)">s</small></div>
+      <div class="kpi-sub">Current peak</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-accent"></div>
+      <div class="kpi-icon">🕐</div>
+      <div class="kpi-label">Global Ticks</div>
+      <div class="kpi-value" id="kpi-ticks">0</div>
+      <div class="kpi-sub">Seconds elapsed</div>
+    </div>
+  </div>
 
-<div class="controls">
+  <div class="main-grid">
+    <div>
+      <div class="add-panel">
+        <div class="panel-title">
+          <div class="panel-title-icon">＋</div>
+          Add Customer to Queue
+        </div>
+        <div class="add-form">
+          <div class="field">
+            <label>Customer ID</label>
+            <input type="number" id="inp-id" placeholder="Auto-assign" min="1" max="9999">
+          </div>
+          <div class="field">
+            <label>Assign Counter</label>
+            <select id="inp-counter">
+              <option value="0">Pallavi — Crimson</option>
+              <option value="1">Pragati — Forest</option>
+              <option value="2">Vishal — Navy</option>
+              <option value="3">Omkar — Plum</option>
+              <option value="auto">Auto (shortest queue)</option>
+            </select>
+          </div>
+          <button class="btn-primary" onclick="handleAdd()">
+            <span>＋</span> Add Customer
+          </button>
+        </div>
+      </div>
 
-<input type="number" id="personID" placeholder="Enter Person ID">
+      <div class="counters-grid">
+        <div class="counter-card c1" id="card-0">
+          <div class="counter-head">
+            <div class="counter-id-wrap">
+              <div class="counter-badge">C1</div>
+              <div><div class="counter-name">Pallavi</div><div style="font-size:11px;color:var(--muted)">Crimson Desk</div></div>
+            </div>
+            <div class="counter-status status-open" id="status-0">Open</div>
+          </div>
+          <div class="counter-queue" id="cq-0"></div>
+          <div class="counter-foot">
+            <button class="btn-serve" onclick="handleServe(0)">✓ Serve Next</button>
+            <button class="btn-tick-c" onclick="handleTickOne(0)" title="Tick +1s">⏱</button>
+          </div>
+        </div>
 
-<button onclick="addPerson()">Add Person</button>
-<button onclick="removePerson()">Remove Person</button>
+        <div class="counter-card c2" id="card-1">
+          <div class="counter-head">
+            <div class="counter-id-wrap">
+              <div class="counter-badge">C2</div>
+              <div><div class="counter-name">Pragati</div><div style="font-size:11px;color:var(--muted)">Forest Desk</div></div>
+            </div>
+            <div class="counter-status status-open" id="status-1">Open</div>
+          </div>
+          <div class="counter-queue" id="cq-1"></div>
+          <div class="counter-foot">
+            <button class="btn-serve" onclick="handleServe(1)">✓ Serve Next</button>
+            <button class="btn-tick-c" onclick="handleTickOne(1)" title="Tick +1s">⏱</button>
+          </div>
+        </div>
 
+        <div class="counter-card c3" id="card-2">
+          <div class="counter-head">
+            <div class="counter-id-wrap">
+              <div class="counter-badge">C3</div>
+              <div><div class="counter-name">Vishal</div><div style="font-size:11px;color:var(--muted)">Navy Desk</div></div>
+            </div>
+            <div class="counter-status status-open" id="status-2">Open</div>
+          </div>
+          <div class="counter-queue" id="cq-2"></div>
+          <div class="counter-foot">
+            <button class="btn-serve" onclick="handleServe(2)">✓ Serve Next</button>
+            <button class="btn-tick-c" onclick="handleTickOne(2)" title="Tick +1s">⏱</button>
+          </div>
+        </div>
+
+        <div class="counter-card c4" id="card-3">
+          <div class="counter-head">
+            <div class="counter-id-wrap">
+              <div class="counter-badge">C4</div>
+              <div><div class="counter-name">Omkar</div><div style="font-size:11px;color:var(--muted)">Plum Desk</div></div>
+            </div>
+            <div class="counter-status status-open" id="status-3">Open</div>
+          </div>
+          <div class="counter-queue" id="cq-3"></div>
+          <div class="counter-foot">
+            <button class="btn-serve" onclick="handleServe(3)">✓ Serve Next</button>
+            <button class="btn-tick-c" onclick="handleTickOne(3)" title="Tick +1s">⏱</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar">
+      <div class="global-panel">
+        <div class="panel-title">
+          <div class="panel-title-icon">⚙</div>
+          Global Controls
+        </div>
+        <div class="global-btns">
+          <button class="btn-global" onclick="handleTickAll()">
+            <span class="btn-icon">⏱</span> Tick All Counters +1s
+          </button>
+          <button class="btn-global" onclick="handleServeAll()">
+            <span class="btn-icon">✓</span> Serve Front of All
+          </button>
+          <button class="btn-global" onclick="handleAutoFill()">
+            <span class="btn-icon">🎲</span> Auto-Fill Demo Data
+          </button>
+          <button class="btn-global danger" onclick="handleClearAll()">
+            <span class="btn-icon">🗑</span> Clear All Queues
+          </button>
+        </div>
+      </div>
+
+      <div class="log-panel">
+        <div class="log-head">
+          <div class="log-title">📋 Event Log <span class="log-count" id="log-count">0</span></div>
+          <button class="btn-log-clear" onclick="clearLog()">Clear</button>
+        </div>
+        <div class="log-list" id="log-list"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<h2>Queue Visualization</h2>
+<div class="toast-container" id="toasts"></div>
 
-<div id="queueContainer" class="queue"></div>
+<script>
+const MAX = 10;
+const NAMES = ['Emma','Liam','Noah','Olivia','Ava','Ethan','Sophia','Mason','Isabella','William','Mia','James','Luna','Logan','Charlotte'];
+const COUNTER_NAMES = ['Pallavi','Pragati','Vishal','Omkar'];
 
-<h2>Statistics</h2>
+// 4 independent C-style queues: each is array of {id, name, wait_time}
+const queues = [[],[],[],[]];
+let totalServed = 0, totalTicks = 0, autoId = 100, logEntries = 0;
 
-<div class="stats">
-<p>Total Customers: <span id="total">0</span></p>
-<p>Average Wait: <span id="avg">0</span> sec</p>
-<p>Longest Wait: <span id="long">0</span> sec</p>
-</div>
+// ── C Queue Functions ──
+function add_person(qIdx, id, name) {
+  if (queues[qIdx].length < MAX) { queues[qIdx].push({ id, name, wait_time: 0 }); return true; }
+  return false;
+}
+function remove_person(qIdx) {
+  if (queues[qIdx].length > 0) { totalServed++; return queues[qIdx].shift(); }
+  return null;
+}
+function get_time(qIdx, index) {
+  return index < queues[qIdx].length ? queues[qIdx][index].wait_time : -1;
+}
+function tick_one(qIdx) { queues[qIdx].forEach(c => c.wait_time++); }
+function tick_all()     { queues.forEach((_, i) => tick_one(i)); totalTicks++; }
 
-</div>
+// ── Helpers ──
+function randName() { return NAMES[Math.floor(Math.random() * NAMES.length)]; }
+function nowStr() {
+  const d = new Date();
+  return [d.getHours(),d.getMinutes(),d.getSeconds()].map(n=>String(n).padStart(2,'0')).join(':');
+}
 
-<!-- Flying Background Objects -->
-<div class="bg-object obj1"></div>
-<div class="bg-object obj2"></div>
-<div class="bg-object obj3"></div>
+function log(msg, type='info') {
+  logEntries++;
+  const el = document.createElement('div');
+  el.className = 'log-item';
+  el.innerHTML = `<div class="log-dot ${type}"></div><div><div class="log-text">${msg}</div><span class="log-time">${nowStr()}</span></div>`;
+  document.getElementById('log-list').prepend(el);
+  document.getElementById('log-count').textContent = logEntries;
+}
 
-<script src="script.js"></script>
+function clearLog() {
+  document.getElementById('log-list').innerHTML = '';
+  logEntries = 0;
+  document.getElementById('log-count').textContent = 0;
+}
 
+function toast(msg, icon='✓') {
+  const c = document.getElementById('toasts');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(() => { t.classList.add('fadeout'); setTimeout(() => t.remove(), 300); }, 2200);
+}
+
+// ── Render ──
+function renderCounter(qIdx) {
+  const q = queues[qIdx];
+  const el = document.getElementById(`cq-${qIdx}`);
+  const st = document.getElementById(`status-${qIdx}`);
+
+  if (q.length === 0) { st.textContent = 'Open'; st.className = 'counter-status status-open'; }
+  else if (q.length >= MAX) { st.textContent = 'Full'; st.className = 'counter-status status-full'; }
+  else { st.textContent = `${q.length} waiting`; st.className = 'counter-status status-busy'; }
+
+  if (q.length === 0) { el.innerHTML = '<div class="q-empty">No customers waiting</div>'; return; }
+  el.innerHTML = '';
+  q.forEach((c, i) => {
+    const row = document.createElement('div');
+    row.className = 'q-row' + (i === 0 ? ' front' : '');
+    row.innerHTML = `<span class="q-pos">${i+1}</span>
+      <span class="q-name">${c.name} <span style="font-family:var(--font-mono);font-size:10px;opacity:.55">#${c.id}</span></span>
+      <span class="q-wait">${c.wait_time}s</span>`;
+    el.appendChild(row);
+  });
+}
+
+function renderAll() {
+  for (let i = 0; i < 4; i++) renderCounter(i);
+  const total = queues.reduce((s,q) => s + q.length, 0);
+  const maxWait = queues.flat().reduce((m,c) => Math.max(m, c.wait_time), 0);
+  document.getElementById('kpi-total').textContent  = total;
+  document.getElementById('kpi-served').textContent = totalServed;
+  document.getElementById('kpi-maxwait').innerHTML  = `${maxWait}<small style="font-size:16px;font-family:var(--font-mono)">s</small>`;
+  document.getElementById('kpi-ticks').textContent  = totalTicks;
+}
+
+// ── Handlers ──
+function handleAdd() {
+  const idEl  = document.getElementById('inp-id');
+  const ctrEl = document.getElementById('inp-counter');
+  let id = parseInt(idEl.value) || autoId++;
+  let qIdx = ctrEl.value;
+  if (qIdx === 'auto') qIdx = queues.reduce((mi,q,i,a) => q.length < a[mi].length ? i : mi, 0);
+  else qIdx = parseInt(qIdx);
+  const name = randName();
+  if (!add_person(qIdx, id, name)) { toast(`${COUNTER_NAMES[qIdx]} is full!`,'⚠'); log(`Cannot add #${id} — ${COUNTER_NAMES[qIdx]} full`,'warn'); return; }
+  log(`${name} (#${id}) joined ${COUNTER_NAMES[qIdx]}`,'add');
+  idEl.value = '';
+  renderAll();
+}
+
+function handleServe(qIdx) {
+  const r = remove_person(qIdx);
+  if (!r) { toast(`${COUNTER_NAMES[qIdx]} is empty`,'—'); return; }
+  log(`${r.name} (#${r.id}) served at ${COUNTER_NAMES[qIdx]} after ${r.wait_time}s`,'serve');
+  toast(`Served ${r.name} @ ${COUNTER_NAMES[qIdx]}`,'✓');
+  renderAll();
+}
+
+function handleTickOne(qIdx) {
+  if (!queues[qIdx].length) return;
+  tick_one(qIdx); totalTicks++;
+  log(`Clock tick — ${COUNTER_NAMES[qIdx]} +1s`,'tick');
+  renderAll();
+}
+
+function handleTickAll() {
+  tick_all();
+  log('Global tick — all counters +1s','tick');
+  toast('All counters ticked +1s','⏱');
+  renderAll();
+}
+
+function handleServeAll() {
+  let count = 0;
+  for (let i = 0; i < 4; i++) { const r = remove_person(i); if (r) { count++; log(`${r.name} served at ${COUNTER_NAMES[i]}`,'serve'); } }
+  if (count) toast(`Served ${count} customer${count>1?'s':''}`,'✓');
+  renderAll();
+}
+
+function handleAutoFill() {
+  const demo = [['Emma',0],['Liam',1],['Noah',2],['Olivia',3],['Ava',0],['Ethan',1],['Sophia',2],['Mason',3],['Isabella',0],['William',1]];
+  demo.forEach(([name,q]) => { if (queues[q].length < MAX) queues[q].push({ id: autoId++, name, wait_time: Math.floor(Math.random()*25) }); });
+  log('Demo customers loaded across all counters','info');
+  toast('Demo data loaded!','🎲');
+  renderAll();
+}
+
+function handleClearAll() {
+  queues.forEach(q => q.length = 0);
+  log('All queues cleared','warn');
+  toast('All queues cleared','🗑');
+  renderAll();
+}
+
+// ── Clock ──
+function updateClock() {
+  const d = new Date();
+  document.getElementById('clock').textContent = [d.getHours(),d.getMinutes(),d.getSeconds()].map(n=>String(n).padStart(2,'0')).join(':');
+  document.getElementById('clock-date').textContent = d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}).toUpperCase();
+}
+setInterval(updateClock, 1000); updateClock();
+document.getElementById('inp-id').addEventListener('keydown', e => { if (e.key==='Enter') handleAdd(); });
+
+log('QueuePro initialized — 4 counters online','info');
+renderAll();
+</script>
 </body>
 </html>
